@@ -104,9 +104,9 @@ void UDwarfGameInstance::FindServers() {
 	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
 	// Can prob use line below for packaged proj, but not for testing locally, need 2 following lines
-	//SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
-	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
-	if (LocalPlayer) SessionInterface->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), SessionSearch.ToSharedRef());
+	SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
+	/*const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	if (LocalPlayer) SessionInterface->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), SessionSearch.ToSharedRef());*/
 
 	
 }

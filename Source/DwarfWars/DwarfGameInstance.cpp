@@ -9,7 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 
 UDwarfGameInstance::UDwarfGameInstance() {
-
+	DefaultSessionName = FName("My Session");
 }
 
 void UDwarfGameInstance::Init() {
@@ -24,7 +24,7 @@ void UDwarfGameInstance::Init() {
 	}
 }
 
-void UDwarfGameInstance::OnCreateSessionComplete(FName ServerName, bool Succeeded) {
+void UDwarfGameInstance::OnCreateSessionComplete(FName SessionName, bool Succeeded) {
 	UE_LOG(LogTemp, Warning, TEXT("OnCreateSessionComplete | Succeeded: %d"), Succeeded);
 	if (Succeeded) {
 		GetWorld()->ServerTravel("/Game/Maps/TestLevel?listen");
@@ -32,11 +32,14 @@ void UDwarfGameInstance::OnCreateSessionComplete(FName ServerName, bool Succeede
 }
 
 void UDwarfGameInstance::OnFindSessionComplete(bool Succeeded) {
+	SearchingForServer.Broadcast(false);
+
 	UE_LOG(LogTemp, Warning, TEXT("OnFindSessionComplete | Succeeded: %d"), Succeeded);
 	if (Succeeded) {
-		TArray<FOnlineSessionSearchResult> SearchResults = SessionSearch->SearchResults;
-		
-		for (FOnlineSessionSearchResult Result : SearchResults) {
+		int32 ArrayIndex = -1;
+		for (FOnlineSessionSearchResult Result : SessionSearch->SearchResults) {
+			++ArrayIndex;
+
 			if (!Result.IsValid()) continue;
 
 			FServerInfo Info;
@@ -51,16 +54,13 @@ void UDwarfGameInstance::OnFindSessionComplete(bool Succeeded) {
 			Info.MaxPlayers = Result.Session.SessionSettings.NumPublicConnections;
 			Info.CurrentPlayers = Info.MaxPlayers - Result.Session.NumOpenPublicConnections;
 			Info.SetPlayerCount();
+			Info.ServerArrayIndex = ArrayIndex;
+			Info.Ping = Result.PingInMs;
 			
 			ServerListDelegate.Broadcast(Info);
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("Search Results, Server Count: %d"), SearchResults.Num());
-		
-		if (SearchResults.Num()) {
-			/*UE_LOG(LogTemp, Warning, TEXT("Joining Server"));
-			SessionInterface->JoinSession(0, "My Session", SearchResults[0]);*/
-		}
+		UE_LOG(LogTemp, Warning, TEXT("Search Results, Server Count: %d"), SessionSearch->SearchResults.Num());
 	}
 }
 
@@ -73,9 +73,9 @@ void UDwarfGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSession
 	}
 }
 
-void UDwarfGameInstance::CreateServer(FString ServerName, FString HostName) {
+void UDwarfGameInstance::CreateServer(FCreateServerInfo ServerInfo) {
 	if (SessionInterface.IsValid()) {
-		UE_LOG(LogTemp, Warning, TEXT("CreateServer"));
+		UE_LOG(LogTemp, Warning, TEXT("CreateServer | MaxPlayers: %d"), ServerInfo.MaxPlayers);
 		FOnlineSessionSettings SessionSettings;
 		SessionSettings.bAllowJoinInProgress = true;
 		SessionSettings.bAllowJoinViaPresence = true;
@@ -84,24 +84,62 @@ void UDwarfGameInstance::CreateServer(FString ServerName, FString HostName) {
 		SessionSettings.bIsLANMatch = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL" ? true : false;
 		SessionSettings.bShouldAdvertise = true;
 		SessionSettings.bUsesPresence = true;
-		SessionSettings.NumPublicConnections = 10;
 
-		SessionSettings.Set(FName("SERVER_NAME_KEY"), ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-		SessionSettings.Set(FName("SERVER_HOSTNAME_KEY"), HostName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
-		SessionInterface->CreateSession(0, FName("My Session"), SessionSettings);
+		SessionSettings.NumPublicConnections = ServerInfo.MaxPlayers;
+
+		SessionSettings.Set(FName("SERVER_NAME_KEY"), ServerInfo.ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+
+		SessionInterface->CreateSession(0, DefaultSessionName, SessionSettings);
 	}
 }
 
 void UDwarfGameInstance::FindServers() {
+	SearchingForServer.Broadcast(true);
+
 	UE_LOG(LogTemp, Warning, TEXT("FindServers"));
 	SessionSearch = MakeShareable(new FOnlineSessionSearch);
 	SessionSearch->bIsLanQuery = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL" ? true : false;
 	SessionSearch->MaxSearchResults = 10000;
 	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
+	// Can prob use line below for packaged proj, but not for testing locally, need 2 following lines
+	//SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	if (LocalPlayer) SessionInterface->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), SessionSearch.ToSharedRef());
+
+	
+}
+
+void UDwarfGameInstance::JoinServer(int32 ArrayIndex) {
+	FOnlineSessionSearchResult Result = SessionSearch->SearchResults[ArrayIndex];
+	if (Result.IsValid()) {
+		UE_LOG(LogTemp, Warning, TEXT("JOINING SERVER AT INDEX: %d"), ArrayIndex);
+		SessionInterface->JoinSession(0, DefaultSessionName, Result);
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("FAILED TO JOIN SERVER AT INDEX: %d"), ArrayIndex);
+	}
+}
+
+FText UDwarfGameInstance::ValidatePlayerCountInput(FText Input, FText CurrentValue) {
+	FString InputString = Input.ToString();
+	if (InputString == "") {
+		return FText::FromString("");
+	}
+
+	FRegexPattern Pattern(TEXT("-?\\d+$"));
+
+	FRegexMatcher Matcher(Pattern, InputString);
+
+	if (!Matcher.FindNext() || Input.IsEmpty()) {
+		return CurrentValue;
+	}
+
+	int32 InputInt = FCString::Atoi(*InputString);
+	InputInt = FMath::Clamp(InputInt, MIN_PLAYER_COUNT, MAX_PLAYER_COUNT);
+
+	return FText::FromString(FString::FromInt(InputInt));
 }
 
 

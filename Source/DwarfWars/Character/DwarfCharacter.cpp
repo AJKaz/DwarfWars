@@ -5,6 +5,10 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Net/UnrealNetwork.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Animation/AnimMontage.h"
+#include "Components/BoxComponent.h"
 
 // Sets default values
 ADwarfCharacter::ADwarfCharacter() {
@@ -22,6 +26,14 @@ ADwarfCharacter::ADwarfCharacter() {
 	// Show Overhead Widget For Player Name
 	/*OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(RootComponent);*/
+
+	/* Animation Stuff */
+	bIsFruity = false;
+
+	/* Attack Collision Stuff */
+	RightHandCollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("RightHandCollisionBox"));
+	RightHandCollisionBox->SetupAttachment(RootComponent);
+	RightHandCollisionBox->SetCollisionProfileName("NoCollision");
 }
 
 void ADwarfCharacter::BeginPlay() {
@@ -32,6 +44,22 @@ void ADwarfCharacter::BeginPlay() {
 			Subsystem->AddMappingContext(InputMappingContext, 0);
 		}
 	}
+
+	// Attach Collision Components to Proper Sockets
+	const FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
+	RightHandCollisionBox->AttachToComponent(GetMesh(), AttachmentRules, FName("RightHandSocket"));
+	
+	PlayerCamera->AttachToComponent(GetMesh(), AttachmentRules, FName("CameraSocket"));
+}
+
+void ADwarfCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ADwarfCharacter, bIsFruity);
+}
+
+void ADwarfCharacter::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);
 }
 
 void ADwarfCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
@@ -39,10 +67,9 @@ void ADwarfCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent)) {
 		EnhancedInputComponent->BindAction(InputMoveAction, ETriggerEvent::Triggered, this, &ADwarfCharacter::Move);
-		//EnhancedInputComponent->BindAction(InputMoveAction, ETriggerEvent::Completed, this, &ADwarfCharacter::StopMoving);
 		EnhancedInputComponent->BindAction(InputLookAction, ETriggerEvent::Triggered, this, &ADwarfCharacter::Look);
-		EnhancedInputComponent->BindAction(InputJumpAction, ETriggerEvent::Triggered, this, &ADwarfCharacter::Jump);
 		EnhancedInputComponent->BindAction(InputPauseAction, ETriggerEvent::Triggered, this, &ADwarfCharacter::Pause);
+		EnhancedInputComponent->BindAction(InputPunchAction, ETriggerEvent::Triggered, this, &ADwarfCharacter::Punch);
 	}
 }
 
@@ -61,19 +88,55 @@ void ADwarfCharacter::Look(const FInputActionValue& Value) {
 	AddControllerPitchInput(LookAxisValue.Y * MouseSensitivity);
 }
 
-void ADwarfCharacter::Jump() {
-	//Super::Jump();
-}
-
-void ADwarfCharacter::Landed(const FHitResult& Hit) {
-	Super::Landed(Hit);
-}
-
 void ADwarfCharacter::Pause() {
 	// TODO: Open pause menu - "Pause" may not be best word for this
 	// as it won't actually pause the game
+	UE_LOG(LogTemp, Warning, TEXT("Pause Pressed"));
 }
 
-void ADwarfCharacter::Tick(float DeltaTime) {
-	Super::Tick(DeltaTime);
+void ADwarfCharacter::PunchAttackStart() {
+	RightHandCollisionBox->SetCollisionProfileName("Weapon");
+}
+
+void ADwarfCharacter::PunchAttackEnd() {
+	RightHandCollisionBox->SetCollisionProfileName("NoCollision");
+}
+
+void ADwarfCharacter::Punch() {
+	// Play punch montage locally so you don't feel any lag
+	if (!HasAuthority()) LocalPunch();
+	ServerPunch();
+}
+
+void ADwarfCharacter::ServerPunch_Implementation() {
+	MulticastPunch();
+}
+
+bool ADwarfCharacter::ServerPunch_Validate() {
+	return true;
+}
+
+void ADwarfCharacter::MulticastPunch_Implementation() {
+	// If server or client that's not THIS client, return
+	if (IsLocallyControlled() && !HasAuthority()) return;
+	LocalPunch();
+}
+
+void ADwarfCharacter::LocalPunch() {
+	if (PunchAttackMontage) PlayAnimMontage(PunchAttackMontage, 1.f, FName("Punch_Start_1"));
+}
+
+void ADwarfCharacter::SetIsFruity(bool bFruity) {
+	bIsFruity = bFruity;
+}
+
+bool ADwarfCharacter::IsFruity() {
+	return bIsFruity;
+}
+
+bool ADwarfCharacter::IsMoving() {
+	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement()) {
+		return MovementComponent->GetCurrentAcceleration().Size() > 0.f;
+	}
+	return false;
 }

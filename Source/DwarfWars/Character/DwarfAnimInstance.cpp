@@ -7,7 +7,6 @@
 
 void UDwarfAnimInstance::NativeInitializeAnimation() {
 	Super::NativeInitializeAnimation();
-
 	DwarfCharacter = Cast<ADwarfCharacter>(TryGetPawnOwner());
 }
 
@@ -16,12 +15,12 @@ void UDwarfAnimInstance::NativeUpdateAnimation(float DeltaTime) {
 
 	if (DwarfCharacter == nullptr) DwarfCharacter = Cast<ADwarfCharacter>(TryGetPawnOwner());
 	if (DwarfCharacter == nullptr) return;
-
+	
 	FVector Velocity = DwarfCharacter->GetVelocity();
 	Velocity.Z = 0.f;
 	Speed = Velocity.Size();
 
-	bIsInAir = DwarfCharacter->GetCharacterMovement()->IsFalling();
+	bIsAccelerating = DwarfCharacter->IsMoving();
 
-	bIsAccelerating = DwarfCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f;
+	bIsFruity = DwarfCharacter->IsFruity();
 }

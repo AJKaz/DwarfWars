@@ -11,6 +11,8 @@ class UInputMappingContext;
 class UInputAction;
 class UCameraComponent;
 class UWidgetComponent;
+class UAnimMontage;
+class UBoxComponent;
 
 UCLASS()
 class DWARFWARS_API ADwarfCharacter : public ACharacter {
@@ -20,7 +22,10 @@ public:
 	ADwarfCharacter();
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	virtual void Jump() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	void PunchAttackStart();
+	void PunchAttackEnd();
 
 protected:
 	virtual void BeginPlay() override;
@@ -29,15 +34,18 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputMappingContext* InputMappingContext;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputMoveAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputLookAction;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputJumpAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputPauseAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputPunchAction;
 
+	
 	/* Movement */
 	void Move(const FInputActionValue& Value);
-	//void StopMoving();
 	void Look(const FInputActionValue& Value);
-	virtual void Landed(const FHitResult& Hit) override;
 	void Pause();
+	
+	/* Triggers Attack Animations Based on User Input */
+	void Punch();
+
 private:
 	/* Camera */
 	UPROPERTY(VisibleAnywhere, Category = "Camera") 
@@ -49,4 +57,32 @@ private:
 
 	/*UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UWidgetComponent* OverheadWidget;*/
+
+	/* Anim Stuff */
+	UPROPERTY(Replicated, EditAnywhere, Category = "Animation Stuff", meta = (AllowPrivateAccess = "true"))
+	bool bIsFruity;
+
+	UPROPERTY(EditAnywhere, Category = "Animation Stuff", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* PunchAttackMontage;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Collision, meta = (AllowPrivateAccess = "true"))
+	UBoxComponent* RightHandCollisionBox;
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerPunch();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastPunch();
+
+	void LocalPunch();
+
+public:
+	/* Getters & Setters */
+
+	UFUNCTION(Exec, Category = "Commands")
+	void SetIsFruity(bool bFruity);
+
+	bool IsFruity();
+
+	bool IsMoving();
 };

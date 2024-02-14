@@ -9,6 +9,10 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Animation/AnimMontage.h"
 #include "Components/BoxComponent.h"
+#include "Components/PrimitiveComponent.h"
+#include "Engine.h"
+#include "Components/AudioComponent.h"
+
 
 // Sets default values
 ADwarfCharacter::ADwarfCharacter() {
@@ -34,6 +38,15 @@ ADwarfCharacter::ADwarfCharacter() {
 	RightHandCollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("RightHandCollisionBox"));
 	RightHandCollisionBox->SetupAttachment(RootComponent);
 	RightHandCollisionBox->SetCollisionProfileName("NoCollision");
+	RightHandCollisionBox->SetNotifyRigidBodyCollision(false);
+	RightHandCollisionBox->SetGenerateOverlapEvents(false);
+
+	/* Audio */
+	PunchAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("PunchAudioComponent"));
+	PunchAudioComponent->SetupAttachment(RootComponent);
+
+	/* Misc */
+	bIsAttacking = false;
 }
 
 void ADwarfCharacter::BeginPlay() {
@@ -48,8 +61,13 @@ void ADwarfCharacter::BeginPlay() {
 	// Attach Collision Components to Proper Sockets
 	const FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
 	RightHandCollisionBox->AttachToComponent(GetMesh(), AttachmentRules, FName("RightHandSocket"));
-	
+	RightHandCollisionBox->OnComponentHit.AddDynamic(this, &ADwarfCharacter::OnPunchHit);
+
 	PlayerCamera->AttachToComponent(GetMesh(), AttachmentRules, FName("CameraSocket"));
+
+	/* Audio */
+	if (PunchAudioComponent && PunchSoundCue) PunchAudioComponent->SetSound(PunchSoundCue);
+
 }
 
 void ADwarfCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
@@ -96,13 +114,20 @@ void ADwarfCharacter::Pause() {
 
 void ADwarfCharacter::PunchAttackStart() {
 	RightHandCollisionBox->SetCollisionProfileName("Weapon");
+	RightHandCollisionBox->SetNotifyRigidBodyCollision(true);
 }
 
 void ADwarfCharacter::PunchAttackEnd() {
 	RightHandCollisionBox->SetCollisionProfileName("NoCollision");
+	RightHandCollisionBox->SetNotifyRigidBodyCollision(false);
+	bIsAttacking = false;
 }
 
 void ADwarfCharacter::Punch() {
+	if (bIsAttacking) return;
+
+	bIsAttacking = true;
+
 	// Play punch montage locally so you don't feel any lag
 	if (!HasAuthority()) LocalPunch();
 	ServerPunch();
@@ -124,6 +149,15 @@ void ADwarfCharacter::MulticastPunch_Implementation() {
 
 void ADwarfCharacter::LocalPunch() {
 	if (PunchAttackMontage) PlayAnimMontage(PunchAttackMontage, 1.f, FName("Punch_Start_1"));
+}
+
+void ADwarfCharacter::OnPunchHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) {
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, __FUNCTION__);
+
+	if (PunchAudioComponent && !PunchAudioComponent->IsPlaying()) {
+		PunchAudioComponent->SetPitchMultiplier(FMath::RandRange(0.9f, 1.4f));
+		PunchAudioComponent->Play(0.f);
+	}
 }
 
 void ADwarfCharacter::SetIsFruity(bool bFruity) {

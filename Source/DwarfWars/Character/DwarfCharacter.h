@@ -13,6 +13,8 @@ class UCameraComponent;
 class UWidgetComponent;
 class UAnimMontage;
 class UBoxComponent;
+class USoundCue;
+class UAudioComponent;
 
 UCLASS()
 class DWARFWARS_API ADwarfCharacter : public ACharacter {
@@ -65,6 +67,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Animation Stuff", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* PunchAttackMontage;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Audio Stuff", meta = (AllowPrivateAccess = "true"))
+	USoundCue* PunchSoundCue;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Collision, meta = (AllowPrivateAccess = "true"))
 	UBoxComponent* RightHandCollisionBox;
 
@@ -75,6 +80,17 @@ private:
 	void MulticastPunch();
 
 	void LocalPunch();
+
+	/* Triggered when collision hit event fires between players */
+	UFUNCTION()
+	void OnPunchHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+	/* Used for keeping track of if player is currently mid attack */
+	bool bIsAttacking;
+
+	/* Audio */
+	UPROPERTY()
+	UAudioComponent* PunchAudioComponent;
 
 public:
 	/* Getters & Setters */

@@ -67,7 +67,6 @@ void ADwarfCharacter::BeginPlay() {
 
 	/* Audio */
 	if (PunchAudioComponent && PunchSoundCue) PunchAudioComponent->SetSound(PunchSoundCue);
-
 }
 
 void ADwarfCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {

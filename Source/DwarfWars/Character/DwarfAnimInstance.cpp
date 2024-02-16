@@ -22,5 +22,5 @@ void UDwarfAnimInstance::NativeUpdateAnimation(float DeltaTime) {
 
 	bIsAccelerating = DwarfCharacter->IsMoving();
 
-	bIsFruity = DwarfCharacter->IsFruity();
+	bIsInAir = DwarfCharacter->GetCharacterMovement()->IsFalling();
 }

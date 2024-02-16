@@ -10,11 +10,6 @@
 class UInputMappingContext;
 class UInputAction;
 class UCameraComponent;
-class UWidgetComponent;
-class UAnimMontage;
-class UBoxComponent;
-class USoundCue;
-class UAudioComponent;
 
 UCLASS()
 class DWARFWARS_API ADwarfCharacter : public ACharacter {
@@ -26,9 +21,6 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	void PunchAttackStart();
-	void PunchAttackEnd();
-
 protected:
 	virtual void BeginPlay() override;
 
@@ -37,16 +29,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputMoveAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputLookAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputPauseAction;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputPunchAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputJumpAction;
 
 	
 	/* Movement */
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
+	void Jump();
 	void Pause();
-	
-	/* Triggers Attack Animations Based on User Input */
-	void Punch();
 
 private:
 	/* Camera */
@@ -57,48 +47,13 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Player Settings")
 	float MouseSensitivity;
 
-	/*UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UWidgetComponent* OverheadWidget;*/
-
-	/* Anim Stuff */
-	UPROPERTY(Replicated, EditAnywhere, Category = "Animation Stuff", meta = (AllowPrivateAccess = "true"))
-	bool bIsFruity;
-
-	UPROPERTY(EditAnywhere, Category = "Animation Stuff", meta = (AllowPrivateAccess = "true"))
-	UAnimMontage* PunchAttackMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Audio Stuff", meta = (AllowPrivateAccess = "true"))
-	USoundCue* PunchSoundCue;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Collision, meta = (AllowPrivateAccess = "true"))
-	UBoxComponent* RightHandCollisionBox;
-
-	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerPunch();
-
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastPunch();
-
-	void LocalPunch();
-
-	/* Triggered when collision hit event fires between players */
-	UFUNCTION()
-	void OnPunchHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-
-	/* Used for keeping track of if player is currently mid attack */
-	bool bIsAttacking;
-
-	/* Audio */
-	UPROPERTY()
-	UAudioComponent* PunchAudioComponent;
+	void ScreenLog(const FString& TextToLog);
+	void DebugLog(const FString& TextToLog);
 
 public:
 	/* Getters & Setters */
-
-	UFUNCTION(Exec, Category = "Commands")
-	void SetIsFruity(bool bFruity);
-
-	bool IsFruity();
+	
+	//UFUNCTION(Exec, Category = "Commands")	// For custom commands
 
 	bool IsMoving();
 };

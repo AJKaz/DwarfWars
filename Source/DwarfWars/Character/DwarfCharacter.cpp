@@ -7,7 +7,8 @@
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine.h"
-
+#include "DwarfWars/Components/CombatComponent.h"
+#include "DwarfWars/Weapon/Weapon.h"
 
 // Sets default values
 ADwarfCharacter::ADwarfCharacter() {
@@ -21,6 +22,9 @@ ADwarfCharacter::ADwarfCharacter() {
 
 	/* Player Settings Setup */
 	MouseSensitivity = 0.5f;
+
+	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+	CombatComponent->SetIsReplicated(true);
 }
 
 void ADwarfCharacter::BeginPlay() {
@@ -39,6 +43,16 @@ void ADwarfCharacter::BeginPlay() {
 
 void ADwarfCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(ADwarfCharacter, OverlappingWeapon, COND_OwnerOnly);
+}
+
+void ADwarfCharacter::PostInitializeComponents() {
+	Super::PostInitializeComponents();
+
+	if (CombatComponent) {
+		CombatComponent->Character = this;
+	}
 }
 
 void ADwarfCharacter::Tick(float DeltaTime) {
@@ -53,6 +67,8 @@ void ADwarfCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		EnhancedInputComponent->BindAction(InputLookAction, ETriggerEvent::Triggered, this, &ADwarfCharacter::Look);
 		EnhancedInputComponent->BindAction(InputPauseAction, ETriggerEvent::Triggered, this, &ADwarfCharacter::Pause);
 		EnhancedInputComponent->BindAction(InputJumpAction, ETriggerEvent::Triggered, this, &ADwarfCharacter::Jump);
+		EnhancedInputComponent->BindAction(InputEquipAction, ETriggerEvent::Triggered, this, &ADwarfCharacter::Equip);
+		EnhancedInputComponent->BindAction(InputAimAction, ETriggerEvent::Triggered, this, &ADwarfCharacter::AimInput);
 	}
 }
 
@@ -70,13 +86,63 @@ void ADwarfCharacter::Look(const FInputActionValue& Value) {
 
 void ADwarfCharacter::Jump() {
 	Super::Jump();
-	ScreenLog("JUMP");
 }
 
 void ADwarfCharacter::Pause() {
 	// TODO: Open pause menu - "Pause" may not be best word for this
 	// as it won't actually pause the game
 	DebugLog("Pause Pressed");
+}
+
+void ADwarfCharacter::Equip() {
+	if (CombatComponent) {
+		if (HasAuthority()) {
+			CombatComponent->EquipWeapon(OverlappingWeapon);
+		}
+		else {
+			ServerEquipPressed();
+		}
+	}
+}
+
+void ADwarfCharacter::AimInput(const FInputActionValue& Value) {
+	if (CombatComponent) {
+		CombatComponent->SetAiming(Value.Get<bool>());
+	}
+}
+
+void ADwarfCharacter::ServerEquipPressed_Implementation() {
+	if (CombatComponent) {
+		CombatComponent->EquipWeapon(OverlappingWeapon);
+	}
+}
+
+void ADwarfCharacter::SetOverlappingWeapon(AWeapon* Weapon) {
+	if (OverlappingWeapon) {
+		OverlappingWeapon->ShowPickupWidget(false);
+	}
+
+	OverlappingWeapon = Weapon;
+	if (IsLocallyControlled() && OverlappingWeapon) {
+		OverlappingWeapon->ShowPickupWidget(true);
+	}
+}
+
+void ADwarfCharacter::OnRep_OverlappingWeapon(AWeapon* PrevWeapon) {
+	if (OverlappingWeapon) {
+		OverlappingWeapon->ShowPickupWidget(true);
+	}
+	if (PrevWeapon) {
+		PrevWeapon->ShowPickupWidget(false);
+	}
+}
+
+bool ADwarfCharacter::IsWeaponEquipped() {
+	return (CombatComponent && CombatComponent->EquippedWeapon);
+}
+
+bool ADwarfCharacter::IsAiming() {
+	return (CombatComponent && CombatComponent->bAiming);
 }
 
 bool ADwarfCharacter::IsMoving() {

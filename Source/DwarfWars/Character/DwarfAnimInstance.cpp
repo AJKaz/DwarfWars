@@ -21,6 +21,7 @@ void UDwarfAnimInstance::NativeUpdateAnimation(float DeltaTime) {
 	Speed = Velocity.Size();
 
 	bIsAccelerating = DwarfCharacter->IsMoving();
-
 	bIsInAir = DwarfCharacter->GetCharacterMovement()->IsFalling();
+	bWeaponEquipped = DwarfCharacter->IsWeaponEquipped();
+	bAiming = DwarfCharacter->IsAiming();
 }

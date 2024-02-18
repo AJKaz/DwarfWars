@@ -25,6 +25,9 @@ ADwarfCharacter::ADwarfCharacter() {
 
 	CombatComponent = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	CombatComponent->SetIsReplicated(true);
+
+	NetUpdateFrequency = 66.f;
+	MinNetUpdateFrequency = 33.f;
 }
 
 void ADwarfCharacter::BeginPlay() {
@@ -143,6 +146,11 @@ bool ADwarfCharacter::IsWeaponEquipped() {
 
 bool ADwarfCharacter::IsAiming() {
 	return (CombatComponent && CombatComponent->bAiming);
+}
+
+AWeapon* ADwarfCharacter::GetEquippedWeapon() {
+	if (CombatComponent == nullptr) return nullptr;
+	return CombatComponent->EquippedWeapon;
 }
 
 bool ADwarfCharacter::IsMoving() {

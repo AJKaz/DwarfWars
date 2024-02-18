@@ -35,9 +35,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputJumpAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputEquipAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputAimAction;
-
-	
-	/* Movement */
+	/* Input Callbacks */
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Jump();
@@ -81,4 +79,6 @@ public:
 
 	bool IsWeaponEquipped();
 	bool IsAiming();
+
+	AWeapon* GetEquippedWeapon();
 };

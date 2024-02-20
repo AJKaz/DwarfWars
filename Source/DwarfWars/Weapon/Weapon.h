@@ -8,6 +8,7 @@
 
 class USphereComponent;
 class UWidgetComponent;
+class UAnimationAsset;
 
 UENUM(BlueprintType)
 enum class EWeaponState : uint8 {
@@ -29,6 +30,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void ShowPickupWidget(bool bShowWidget);
 
+	virtual void Shoot(const FVector_NetQuantize& StartPos, const FVector_NetQuantize& Direction);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -38,8 +41,13 @@ protected:
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 private:
+	/* 3rd Person View of weapon mesh */
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
-	USkeletalMeshComponent* WeaponMesh;
+	USkeletalMeshComponent* Mesh3P;
+
+	/* 1st Person View of weapon mesh */
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	USkeletalMeshComponent* Mesh1P;
 
 	/* Collision used to detect character overlap */
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
@@ -54,8 +62,11 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	UWidgetComponent* PickupWidget;
 
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	UAnimationAsset* ShootAnimation;
+
 public:
 	void SetWeaponState(EWeaponState State);
+	USkeletalMeshComponent* GetWeaponMesh(bool bMesh1P) const;
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
-	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 };

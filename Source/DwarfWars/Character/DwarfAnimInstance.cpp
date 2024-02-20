@@ -54,8 +54,8 @@ void UDwarfAnimInstance::NativeUpdateAnimation(float DeltaTime) {
 
 	/* Setup Left Hand FABRIK */
 	EquippedWeapon = DwarfCharacter->GetEquippedWeapon();
-	if (bWeaponEquipped && EquippedWeapon && EquippedWeapon->GetWeaponMesh() && DwarfCharacter->GetMesh()) {
-		LeftHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
+	if (bWeaponEquipped && EquippedWeapon && EquippedWeapon->GetWeaponMesh(false) && DwarfCharacter->GetMesh()) {
+		LeftHandTransform = EquippedWeapon->GetWeaponMesh(false)->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
 		
 		// Want "bone" space for weapon, not world space
 		FVector OutPosition;

@@ -9,6 +9,8 @@
 class AWeapon;
 class ADwarfCharacter;
 
+#define TRACE_LENGTH 80000.f
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DWARFWARS_API UCombatComponent : public UActorComponent
 {
@@ -32,6 +34,16 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerSetAiming(bool bIsAiming);
 
+	void ShootButtonPressed(bool bPressed);
+
+	UFUNCTION(Server, Reliable)
+	void ServerShoot(const FVector_NetQuantize& StartPos, const FVector_NetQuantize& Direction);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastShoot(const FVector_NetQuantize& StartPos, const FVector_NetQuantize& Direction);
+
+	void TraceUnderCrosshairs(FHitResult& HitResult);
+
 private:
 	UPROPERTY()
 	ADwarfCharacter* Character;
@@ -47,5 +59,8 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = Movement)
 	float AimWalkSpeed;
+
+	bool bShootButtonPressed;
 		
+	void GetScreenCenter(FVector& Position, FVector& Direction);
 };

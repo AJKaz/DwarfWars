@@ -9,16 +9,42 @@
 #include "Engine.h"
 #include "DwarfWars/Components/CombatComponent.h"
 #include "DwarfWars/Weapon/Weapon.h"
+#include "DwarfAnimInstance.h"
 
 // Sets default values
 ADwarfCharacter::ADwarfCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
 
+	/* Setup Local ArmsMesh (Arms that local player sees) */
+	ArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"));
+	ArmsMesh->SetupAttachment(GetCapsuleComponent());
+	ArmsMesh->bOnlyOwnerSee = true;	// Other players can't see this
+	ArmsMesh->bOwnerNoSee = false;	// Owner can see this
+	ArmsMesh->bCastDynamicShadow = false;	// Don't want it to have shadows
+	ArmsMesh->bReceivesDecals = false;
+	ArmsMesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	ArmsMesh->PrimaryComponentTick.TickGroup = TG_PrePhysics;
+	ArmsMesh->SetCollisionObjectType(ECC_Pawn);
+	ArmsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ArmsMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+
+	/* Actual mesh that other people see */
+	GetMesh()->bOnlyOwnerSee = false; // Local player can't see their own mesh
+	GetMesh()->bOwnerNoSee = true;	// Other players can see the actual mesh
+	GetMesh()->bReceivesDecals = false;
+	GetMesh()->SetCollisionObjectType(ECC_Pawn);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	// GetMesh()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Block); // From Epic FPS proj
+	// GetMesh()->SetCollisionResponseToChannel(COLLISION_PROJECTILE, ECR_Block); // From Epic FPS proj
+	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+
 	/* Camera Component Setup */
-	PlayerCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("PlayerCamera"));
+	/*PlayerCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("PlayerCamera"));
 	PlayerCamera->SetupAttachment(GetMesh());
 	PlayerCamera->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
-	PlayerCamera->bUsePawnControlRotation = true;
+	PlayerCamera->bUsePawnControlRotation = true;*/
 
 	/* Player Settings Setup */
 	MouseSensitivity = 0.5f;
@@ -39,9 +65,9 @@ void ADwarfCharacter::BeginPlay() {
 		}
 	}
 
-	// Attach Collision Components to Proper Sockets
+	// Attach Camera to Head "CameraSocket" 
 	const FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
-	PlayerCamera->AttachToComponent(GetMesh(), AttachmentRules, FName("CameraSocket"));
+	//PlayerCamera->AttachToComponent(GetMesh(), AttachmentRules, FName("CameraSocket"));
 }
 
 void ADwarfCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
@@ -72,6 +98,7 @@ void ADwarfCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		EnhancedInputComponent->BindAction(InputJumpAction, ETriggerEvent::Triggered, this, &ADwarfCharacter::Jump);
 		EnhancedInputComponent->BindAction(InputEquipAction, ETriggerEvent::Triggered, this, &ADwarfCharacter::Equip);
 		EnhancedInputComponent->BindAction(InputAimAction, ETriggerEvent::Triggered, this, &ADwarfCharacter::AimInput);
+		EnhancedInputComponent->BindAction(InputShootAction, ETriggerEvent::Triggered, this, &ADwarfCharacter::ShootInput);
 	}
 }
 
@@ -114,6 +141,13 @@ void ADwarfCharacter::AimInput(const FInputActionValue& Value) {
 	}
 }
 
+void ADwarfCharacter::ShootInput(const FInputActionValue& Value) {
+	if (CombatComponent) {
+		//ScreenBoolLog("ShootInput val is: ", Value.Get<bool>());
+		CombatComponent->ShootButtonPressed(Value.Get<bool>());
+	}
+}
+
 void ADwarfCharacter::ServerEquipPressed_Implementation() {
 	if (CombatComponent) {
 		CombatComponent->EquipWeapon(OverlappingWeapon);
@@ -138,6 +172,18 @@ void ADwarfCharacter::OnRep_OverlappingWeapon(AWeapon* PrevWeapon) {
 	if (PrevWeapon) {
 		PrevWeapon->ShowPickupWidget(false);
 	}
+}
+
+
+void ADwarfCharacter::PlayShootMontage(bool bAiming) {
+	if (CombatComponent == nullptr || CombatComponent->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ShootWeaponMontage) {
+		AnimInstance->Montage_Play(ShootWeaponMontage);
+		AnimInstance->Montage_JumpToSection(bAiming ? FName("RifleAim") : FName("RifleHip"));
+	}
+
 }
 
 bool ADwarfCharacter::IsWeaponEquipped() {
@@ -166,4 +212,8 @@ void ADwarfCharacter::ScreenLog(const FString& TextToLog) {
 
 void ADwarfCharacter::DebugLog(const FString& TextToLog) {
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *TextToLog);
+}
+
+void ADwarfCharacter::ScreenBoolLog(const FString& TextToLog, bool bToLog) {
+	ScreenLog(TextToLog + (bToLog ? "true" : "false"));
 }

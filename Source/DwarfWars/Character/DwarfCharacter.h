@@ -12,6 +12,7 @@ class UInputAction;
 class UCameraComponent;
 class UCombatComponent;
 class AWeapon;
+class UAnimMontage;
 
 UCLASS()
 class DWARFWARS_API ADwarfCharacter : public ACharacter {
@@ -24,6 +25,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
 
+	void PlayShootMontage(bool bAiming);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -35,6 +38,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputJumpAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputEquipAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputAimAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input") UInputAction* InputShootAction;
 	/* Input Callbacks */
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -42,8 +46,13 @@ protected:
 	void Pause();
 	void Equip();
 	void AimInput(const FInputActionValue& Value);
+	void ShootInput(const FInputActionValue& Value);
 
 private:
+	/** Visible Arms that local player sees */
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	USkeletalMeshComponent* ArmsMesh;
+
 	/* Camera */
 	UPROPERTY(VisibleAnywhere, Category = "Camera") 
 	UCameraComponent* PlayerCamera;
@@ -54,6 +63,7 @@ private:
 
 	void ScreenLog(const FString& TextToLog);
 	void DebugLog(const FString& TextToLog);
+	void ScreenBoolLog(const FString& TextToLog, bool bToLog);
 
 	UPROPERTY(VisibleAnywhere)
 	UCombatComponent* CombatComponent;
@@ -66,6 +76,9 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipPressed();
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ShootWeaponMontage;
 
 public:
 	/* Getters & Setters */

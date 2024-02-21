@@ -9,6 +9,7 @@
 class USphereComponent;
 class UWidgetComponent;
 class UAnimationAsset;
+class UTexture2D;
 
 UENUM(BlueprintType)
 enum class EWeaponState : uint8 {
@@ -31,6 +32,18 @@ public:
 	void ShowPickupWidget(bool bShowWidget);
 
 	virtual void Shoot(const FVector_NetQuantize& StartPos, const FVector_NetQuantize& Direction);
+
+	/* Crosshair Textures */
+	UPROPERTY(EditAnywhere, Category = Crosshair)
+	UTexture2D* CrosshairCenter;
+	UPROPERTY(EditAnywhere, Category = Crosshair)
+	UTexture2D* CrosshairTop;
+	UPROPERTY(EditAnywhere, Category = Crosshair)
+	UTexture2D* CrosshairBottom;
+	UPROPERTY(EditAnywhere, Category = Crosshair)
+	UTexture2D* CrosshairLeft;
+	UPROPERTY(EditAnywhere, Category = Crosshair)
+	UTexture2D* CrosshairRight;
 
 protected:
 	virtual void BeginPlay() override;

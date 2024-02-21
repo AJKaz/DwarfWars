@@ -51,7 +51,7 @@ protected:
 private:
 	/** Visible Arms that local player sees */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	USkeletalMeshComponent* ArmsMesh;
+	USkeletalMeshComponent* Mesh1P;
 
 	/* Camera */
 	UPROPERTY(VisibleAnywhere, Category = "Camera") 
@@ -94,4 +94,6 @@ public:
 	bool IsAiming();
 
 	AWeapon* GetEquippedWeapon();
+
+	USkeletalMeshComponent* GetCharacterMesh(bool bMesh1P) const;
 };

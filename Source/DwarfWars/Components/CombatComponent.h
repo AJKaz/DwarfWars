@@ -8,6 +8,8 @@
 
 class AWeapon;
 class ADwarfCharacter;
+class ADwarfPlayerController;
+class ADwarfHUD;
 
 #define TRACE_LENGTH 80000.f
 
@@ -44,9 +46,17 @@ protected:
 
 	void TraceUnderCrosshairs(FHitResult& HitResult);
 
+	void SetHUDCrosshairs(float DeltaTime);
+
 private:
 	UPROPERTY()
 	ADwarfCharacter* Character;
+
+	UPROPERTY()
+	ADwarfPlayerController* Controller;
+
+	UPROPERTY()
+	ADwarfHUD* HUD;
 
 	UPROPERTY(Replicated)
 	AWeapon* EquippedWeapon;
@@ -63,4 +73,7 @@ private:
 	bool bShootButtonPressed;
 		
 	void GetScreenCenter(FVector& Position, FVector& Direction);
+
+	float CrosshairVelocityFactor;
+	float CrosshairAirFactor;
 };

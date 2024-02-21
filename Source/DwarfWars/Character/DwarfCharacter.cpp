@@ -16,17 +16,17 @@ ADwarfCharacter::ADwarfCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
 
 	/* Setup Local ArmsMesh (Arms that local player sees) */
-	ArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"));
-	ArmsMesh->SetupAttachment(GetCapsuleComponent());
-	ArmsMesh->bOnlyOwnerSee = true;	// Other players can't see this
-	ArmsMesh->bOwnerNoSee = false;	// Owner can see this
-	ArmsMesh->bCastDynamicShadow = false;	// Don't want it to have shadows
-	ArmsMesh->bReceivesDecals = false;
-	ArmsMesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
-	ArmsMesh->PrimaryComponentTick.TickGroup = TG_PrePhysics;
-	ArmsMesh->SetCollisionObjectType(ECC_Pawn);
-	ArmsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	ArmsMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh1P"));
+	Mesh1P->SetupAttachment(GetCapsuleComponent());
+	Mesh1P->bOnlyOwnerSee = true;	// Other players can't see this
+	Mesh1P->bOwnerNoSee = false;	// Owner can see this
+	Mesh1P->bCastDynamicShadow = false;	// Don't want it to have shadows
+	Mesh1P->bReceivesDecals = false;
+	Mesh1P->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	Mesh1P->PrimaryComponentTick.TickGroup = TG_PrePhysics;
+	Mesh1P->SetCollisionObjectType(ECC_Pawn);
+	Mesh1P->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Mesh1P->SetCollisionResponseToAllChannels(ECR_Ignore);
 
 	/* Actual mesh that other people see */
 	GetMesh()->bOnlyOwnerSee = false; // Local player can't see their own mesh
@@ -41,10 +41,10 @@ ADwarfCharacter::ADwarfCharacter() {
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
 	/* Camera Component Setup */
-	/*PlayerCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("PlayerCamera"));
-	PlayerCamera->SetupAttachment(GetMesh());
+	PlayerCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("PlayerCamera"));
+	PlayerCamera->SetupAttachment(Mesh1P);
 	PlayerCamera->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
-	PlayerCamera->bUsePawnControlRotation = true;*/
+	PlayerCamera->bUsePawnControlRotation = true;
 
 	/* Player Settings Setup */
 	MouseSensitivity = 0.5f;
@@ -67,7 +67,7 @@ void ADwarfCharacter::BeginPlay() {
 
 	// Attach Camera to Head "CameraSocket" 
 	const FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
-	//PlayerCamera->AttachToComponent(GetMesh(), AttachmentRules, FName("CameraSocket"));
+	PlayerCamera->AttachToComponent(Mesh1P, AttachmentRules, FName("CameraSocket"));
 }
 
 void ADwarfCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
@@ -197,6 +197,10 @@ bool ADwarfCharacter::IsAiming() {
 AWeapon* ADwarfCharacter::GetEquippedWeapon() {
 	if (CombatComponent == nullptr) return nullptr;
 	return CombatComponent->EquippedWeapon;
+}
+
+USkeletalMeshComponent* ADwarfCharacter::GetCharacterMesh(bool bMesh1P) const {
+	return bMesh1P ? Mesh1P : GetMesh();
 }
 
 bool ADwarfCharacter::IsMoving() {

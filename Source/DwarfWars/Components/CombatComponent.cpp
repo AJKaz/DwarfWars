@@ -9,6 +9,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+#include "DwarfWars/Character/DwarfPlayerController.h"
+#include "DwarfWars/HUD/DwarfHUD.h"
 
 UCombatComponent::UCombatComponent() {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -32,6 +34,7 @@ void UCombatComponent::BeginPlay() {
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	SetHUDCrosshairs(DeltaTime);
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
@@ -48,6 +51,53 @@ void UCombatComponent::SetAiming(bool bIsAiming) {
 	if (Character) {
 		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
 	}
+}
+
+void UCombatComponent::SetHUDCrosshairs(float DeltaTime) {
+	if (Character == nullptr || Character->Controller == nullptr) return;
+
+	Controller = Controller == nullptr ? Cast<ADwarfPlayerController>(Character->Controller) : Controller;
+	if (Controller == nullptr) return;
+
+	HUD = HUD == nullptr ? Cast<ADwarfHUD>(Controller->GetHUD()) : HUD;
+	if (HUD == nullptr) return;
+
+	FHUDPackage HUDPackage;
+	if (EquippedWeapon) {
+		HUDPackage.CrosshairCenter = EquippedWeapon->CrosshairCenter;
+		HUDPackage.CrosshairTop = EquippedWeapon->CrosshairTop;
+		HUDPackage.CrosshairBottom = EquippedWeapon->CrosshairBottom;
+		HUDPackage.CrosshairLeft = EquippedWeapon->CrosshairLeft;
+		HUDPackage.CrosshairRight = EquippedWeapon->CrosshairRight;
+
+		// Calculate Crosshair Spread
+		FVector2D MoveSpeedRange(0.f, Character->GetCharacterMovement()->MaxWalkSpeed);
+		FVector2D VelocityMultiplierRange(0.f, 1.f);
+		FVector Velocity = Character->GetVelocity();
+		Velocity.Z = 0.f;
+	 	CrosshairVelocityFactor = FMath::GetMappedRangeValueClamped(MoveSpeedRange, VelocityMultiplierRange, Velocity.Size());
+
+		if (Character->GetCharacterMovement()->IsFalling()) {
+			CrosshairAirFactor = FMath::FInterpTo(CrosshairAirFactor, 2.25f, DeltaTime, 2.25f);
+		}
+		else {
+			CrosshairAirFactor = FMath::FInterpTo(CrosshairAirFactor, 0.f, DeltaTime, 30.f);
+		}
+
+		HUDPackage.CrosshairSpread = CrosshairVelocityFactor + CrosshairAirFactor;
+	}
+	else {
+		// If no weapon is equipped, don't draw crosshairs
+		HUDPackage.CrosshairCenter = nullptr;
+		HUDPackage.CrosshairTop = nullptr;
+		HUDPackage.CrosshairBottom = nullptr;
+		HUDPackage.CrosshairLeft = nullptr;
+		HUDPackage.CrosshairRight = nullptr;
+		HUDPackage.CrosshairSpread = 0.f;
+	}
+
+	HUD->SetHUDPackage(HUDPackage);
+
 }
 
 void UCombatComponent::GetScreenCenter(FVector& Position, FVector& Direction) {
@@ -141,8 +191,11 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 
 	// Attach to Hand Socket
-	if (const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"))) {
-		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
+	if (const USkeletalMeshSocket* HandSocket = Character->GetCharacterMesh(false)->GetSocketByName(FName("RightHandSocket"))) {
+		HandSocket->AttachActor(EquippedWeapon, Character->GetCharacterMesh(false));
+	}
+	if (const USkeletalMeshSocket* HandSocket = Character->GetCharacterMesh(true)->GetSocketByName(FName("RightHandSocket"))) {
+		HandSocket->AttachActor(EquippedWeapon, Character->GetCharacterMesh(true));
 	}
 
 	EquippedWeapon->SetOwner(Character);

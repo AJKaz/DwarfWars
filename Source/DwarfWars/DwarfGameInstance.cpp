@@ -27,7 +27,7 @@ void UDwarfGameInstance::Init() {
 void UDwarfGameInstance::OnCreateSessionComplete(FName SessionName, bool Succeeded) {
 	UE_LOG(LogTemp, Warning, TEXT("OnCreateSessionComplete | Succeeded: %d"), Succeeded);
 	if (Succeeded) {
-		GetWorld()->ServerTravel("/Game/Maps/LobbyLevel?listen");
+		GetWorld()->ServerTravel("/Game/Maps/TestLevel?listen");
 	}
 }
 

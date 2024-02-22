@@ -15,9 +15,15 @@
 ADwarfCharacter::ADwarfCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
 
+	/* Camera Component Setup */
+	PlayerCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("PlayerCamera"));
+	PlayerCamera->SetupAttachment(GetCapsuleComponent());
+	PlayerCamera->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
+	PlayerCamera->bUsePawnControlRotation = true;
+
 	/* Setup Local ArmsMesh (Arms that local player sees) */
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh1P"));
-	Mesh1P->SetupAttachment(GetCapsuleComponent());
+	Mesh1P->SetupAttachment(PlayerCamera);
 	Mesh1P->bOnlyOwnerSee = true;	// Other players can't see this
 	Mesh1P->bOwnerNoSee = false;	// Owner can see this
 	Mesh1P->bCastDynamicShadow = false;	// Don't want it to have shadows
@@ -40,12 +46,6 @@ ADwarfCharacter::ADwarfCharacter() {
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
-	/* Camera Component Setup */
-	PlayerCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("PlayerCamera"));
-	PlayerCamera->SetupAttachment(Mesh1P);
-	PlayerCamera->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
-	PlayerCamera->bUsePawnControlRotation = true;
-
 	/* Player Settings Setup */
 	MouseSensitivity = 0.5f;
 
@@ -66,8 +66,12 @@ void ADwarfCharacter::BeginPlay() {
 	}
 
 	// Attach Camera to Head "CameraSocket" 
-	const FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
-	PlayerCamera->AttachToComponent(Mesh1P, AttachmentRules, FName("CameraSocket"));
+	/*const FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
+	PlayerCamera->AttachToComponent(Mesh1P, AttachmentRules, FName("CameraSocket"));*/
+
+	// Attach the camera to the "Head" bone of the Mesh1P component
+	//PlayerCamera->AttachToComponent(Mesh1P, FAttachmentTransformRules::SnapToTargetIncludingScale, FName(TEXT("Head")));
+
 }
 
 void ADwarfCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
@@ -124,17 +128,6 @@ void ADwarfCharacter::Pause() {
 	DebugLog("Pause Pressed");
 }
 
-void ADwarfCharacter::Equip() {
-	if (CombatComponent) {
-		if (HasAuthority()) {
-			CombatComponent->EquipWeapon(OverlappingWeapon);
-		}
-		else {
-			ServerEquipPressed();
-		}
-	}
-}
-
 void ADwarfCharacter::AimInput(const FInputActionValue& Value) {
 	if (CombatComponent) {
 		CombatComponent->SetAiming(Value.Get<bool>());
@@ -145,6 +138,17 @@ void ADwarfCharacter::ShootInput(const FInputActionValue& Value) {
 	if (CombatComponent) {
 		//ScreenBoolLog("ShootInput val is: ", Value.Get<bool>());
 		CombatComponent->ShootButtonPressed(Value.Get<bool>());
+	}
+}
+
+void ADwarfCharacter::Equip() {
+	if (CombatComponent) {
+		if (HasAuthority()) {
+			CombatComponent->EquipWeapon(OverlappingWeapon);
+		}
+		else {
+			ServerEquipPressed();
+		}
 	}
 }
 

@@ -116,7 +116,14 @@ void AWeapon::OnRep_WeaponState() {
 }
 
 void AWeapon::Shoot(const FVector_NetQuantize& StartPos, const FVector_NetQuantize& Direction) {
-	if (ShootAnimation && Mesh3P) {
-		Mesh3P->PlayAnimation(ShootAnimation, false);
+	if (ShootAnimation) {
+		if (ACharacter* Character = Cast<ACharacter>(GetOwner())) {
+			if (Character->IsLocallyControlled()) {
+				if (Mesh1P) Mesh1P->PlayAnimation(ShootAnimation, false);
+			}
+			else {
+				if (Mesh3P) Mesh3P->PlayAnimation(ShootAnimation, false);
+			}
+		}
 	}
 }

@@ -39,10 +39,10 @@ protected:
 	void ShootButtonPressed(bool bPressed);
 
 	UFUNCTION(Server, Reliable)
-	void ServerShoot(const FVector_NetQuantize& StartPos, const FVector_NetQuantize& Direction);
+	void ServerShoot(const FVector_NetQuantize& StartPos, const FVector& Direction);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastShoot(const FVector_NetQuantize& StartPos, const FVector_NetQuantize& Direction);
+	void MulticastShoot(const FVector_NetQuantize& StartPos, const FVector& Direction);
 
 	void TraceUnderCrosshairs(FHitResult& HitResult);
 

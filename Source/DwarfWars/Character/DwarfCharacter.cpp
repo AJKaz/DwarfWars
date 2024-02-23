@@ -64,14 +64,6 @@ void ADwarfCharacter::BeginPlay() {
 			Subsystem->AddMappingContext(InputMappingContext, 0);
 		}
 	}
-
-	// Attach Camera to Head "CameraSocket" 
-	/*const FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
-	PlayerCamera->AttachToComponent(Mesh1P, AttachmentRules, FName("CameraSocket"));*/
-
-	// Attach the camera to the "Head" bone of the Mesh1P component
-	//PlayerCamera->AttachToComponent(Mesh1P, FAttachmentTransformRules::SnapToTargetIncludingScale, FName(TEXT("Head")));
-
 }
 
 void ADwarfCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {

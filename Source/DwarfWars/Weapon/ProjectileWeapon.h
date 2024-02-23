@@ -17,7 +17,7 @@ class DWARFWARS_API AProjectileWeapon : public AWeapon
 	GENERATED_BODY()
 	
 public:
-	virtual void Shoot(const FVector_NetQuantize& StartPos, const FVector_NetQuantize& Direction) override;
+	virtual void Shoot(const FVector_NetQuantize& StartPos, const FVector& Direction) override;
 
 private:
 	UPROPERTY(EditAnywhere)

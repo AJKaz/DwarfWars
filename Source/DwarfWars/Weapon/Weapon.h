@@ -31,7 +31,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void ShowPickupWidget(bool bShowWidget);
 
-	virtual void Shoot(const FVector_NetQuantize& StartPos, const FVector_NetQuantize& Direction);
+	virtual void Shoot(const FVector_NetQuantize& StartPos, const FVector& Direction);
 
 	/* Crosshair Textures */
 	UPROPERTY(EditAnywhere, Category = Crosshair)

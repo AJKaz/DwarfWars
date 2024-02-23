@@ -34,8 +34,8 @@ AWeapon::AWeapon() {
 	Mesh3P->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 	Mesh3P->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 	Mesh3P->SetupAttachment(Mesh1P);
-	Mesh1P->bOwnerNoSee = true;
-	Mesh1P->bOnlyOwnerSee = false;
+	Mesh3P->bOwnerNoSee = true;
+	Mesh3P->bOnlyOwnerSee = false;
 
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
 	AreaSphere->SetupAttachment(RootComponent);
@@ -115,7 +115,7 @@ void AWeapon::OnRep_WeaponState() {
 	}
 }
 
-void AWeapon::Shoot(const FVector_NetQuantize& StartPos, const FVector_NetQuantize& Direction) {
+void AWeapon::Shoot(const FVector_NetQuantize& StartPos, const FVector& Direction) {
 	if (ShootAnimation) {
 		if (ACharacter* Character = Cast<ACharacter>(GetOwner())) {
 			if (Character->IsLocallyControlled()) {

@@ -5,7 +5,7 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "Projectile.h"
 
-void AProjectileWeapon::Shoot(const FVector_NetQuantize& StartPos, const FVector_NetQuantize& Direction) {
+void AProjectileWeapon::Shoot(const FVector_NetQuantize& StartPos, const FVector& Direction) {
 	Super::Shoot(StartPos, Direction);
 
 	/* Only server should have authority over spawning projectiles (ie, actual shooting functionality) */
@@ -17,7 +17,6 @@ void AProjectileWeapon::Shoot(const FVector_NetQuantize& StartPos, const FVector
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Owner = GetOwner();
 			SpawnParams.Instigator = InstigatorPawn;
-
 			World->SpawnActor<AProjectile>(ProjectileClass, StartPos, Direction.Rotation(), SpawnParams);
 		}
 	}

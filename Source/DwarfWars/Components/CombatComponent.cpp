@@ -149,30 +149,36 @@ void UCombatComponent::ShootButtonPressed(bool bPressed) {
 	bShootButtonPressed = bPressed;
 
 	if (bPressed) {
-		
+		// HitResult.ImpactPoint -> Is FVector_NetQuantize & is location of hit - can be used for tracers
+		/*FHitResult HitResult;
+		TraceUnderCrosshairs(HitResult);*/
+		// SimulateShoot(HitResult.ImpactPoint);
+
 		FVector StartPos;
 		FVector Direction;
 		GetScreenCenter(StartPos, Direction);
 
-		/*FHitResult HitResult;
-		TraceUnderCrosshairs(HitResult);*/
-		// HitResult.ImpactPoint -> Is FVector_NetQuantize & is location of hit - can be used for tracers
+		/*if (Character->HasAuthority()) UE_LOG(LogTemp, Warning, TEXT("SERVER Direction Vector 2: %s"), *Direction.ToString());
+		if (!Character->HasAuthority()) UE_LOG(LogTemp, Warning, TEXT("CLIENT Direction Vector 2: %s"), *Direction.ToString());*/
 
 		ServerShoot(StartPos, Direction);
 	}
 }
 
-void UCombatComponent::ServerShoot_Implementation(const FVector_NetQuantize& StartPos, const FVector_NetQuantize& Direction) {
+void UCombatComponent::ServerShoot_Implementation(const FVector_NetQuantize& StartPos, const FVector& Direction) {
 	// Montage is rlly jank rn, needa clean it up - just for recoil
 	//if (Character && bPressed) {
 	// Character->PlayShootMontage(bAiming);
 	//}
 	
+	/*if (Character->HasAuthority()) UE_LOG(LogTemp, Warning, TEXT("SERVER Direction Vector in server shoot: %s"), *Direction.ToString());
+	if (!Character->HasAuthority()) UE_LOG(LogTemp, Warning, TEXT("CLIENT Direction Vector in server shoot: %s"), *Direction.ToString());*/
+
 	MulticastShoot(StartPos, Direction);
 
 }
 
-void UCombatComponent::MulticastShoot_Implementation(const FVector_NetQuantize& StartPos, const FVector_NetQuantize& Direction) {
+void UCombatComponent::MulticastShoot_Implementation(const FVector_NetQuantize& StartPos, const FVector& Direction) {
 	if (EquippedWeapon) EquippedWeapon->Shoot(StartPos, Direction);
 }
 
@@ -194,11 +200,6 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
 	if (const USkeletalMeshSocket* HandSocket = Character->GetCharacterMesh(false)->GetSocketByName(FName("RightHandSocket"))) {
 		HandSocket->AttachActor(EquippedWeapon, Character->GetCharacterMesh(false));
 	}
-	/*
-	if (const USkeletalMeshSocket* HandSocket = Character->GetCharacterMesh(true)->GetSocketByName(FName("RightHandSocket"))) {
-		HandSocket->AttachActor(EquippedWeapon, Character->GetCharacterMesh(true));
-	}*/
-
 	
 	EquippedWeapon->SetOwner(Character);
 
@@ -206,17 +207,12 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
 	if (const USkeletalMeshSocket* HandSocket = Character->GetCharacterMesh(false)->GetSocketByName(FName("RightHandSocket"))) {
 		if (USkeletalMeshComponent* WeaponMesh = EquippedWeapon->GetWeaponMesh(false)) {
 			WeaponMesh->AttachToComponent(Character->GetCharacterMesh(false), FAttachmentTransformRules::SnapToTargetIncludingScale, HandSocket->SocketName);
-			WeaponMesh->bOnlyOwnerSee = false;
-			WeaponMesh->bOwnerNoSee = true;
 		}
 	}
 	// Attach 1st person weapon mesh to 1st person char mesh
 	if (const USkeletalMeshSocket* HandSocket = Character->GetCharacterMesh(true)->GetSocketByName(FName("RightHandSocket"))) {
 		if (USkeletalMeshComponent* WeaponMesh = EquippedWeapon->GetWeaponMesh(true)) {
 			WeaponMesh->AttachToComponent(Character->GetCharacterMesh(true), FAttachmentTransformRules::SnapToTargetIncludingScale, HandSocket->SocketName);
-			WeaponMesh->bOnlyOwnerSee = true;
-			WeaponMesh->bOwnerNoSee = false;
-			WeaponMesh->bHiddenInGame = false;
 		}
 	}
 }

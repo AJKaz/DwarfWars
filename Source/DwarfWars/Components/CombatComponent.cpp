@@ -203,16 +203,17 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
 	
 	EquippedWeapon->SetOwner(Character);
 
+	// Attach 1st person weapon mesh to 1st person char mesh
+	if (const USkeletalMeshSocket* HandSocket = Character->GetCharacterMesh(true)->GetSocketByName(FName("RightHandSocket_1P"))) {
+		if (USkeletalMeshComponent* WeaponMesh = EquippedWeapon->GetWeaponMesh(true)) {
+			WeaponMesh->AttachToComponent(Character->GetCharacterMesh(true), FAttachmentTransformRules::SnapToTargetIncludingScale, HandSocket->SocketName);
+			WeaponMesh->bHiddenInGame = false;
+		}
+	}
 	// Attach 3rd person weapon mesh to 3rd person char mesh
 	if (const USkeletalMeshSocket* HandSocket = Character->GetCharacterMesh(false)->GetSocketByName(FName("RightHandSocket"))) {
 		if (USkeletalMeshComponent* WeaponMesh = EquippedWeapon->GetWeaponMesh(false)) {
 			WeaponMesh->AttachToComponent(Character->GetCharacterMesh(false), FAttachmentTransformRules::SnapToTargetIncludingScale, HandSocket->SocketName);
-		}
-	}
-	// Attach 1st person weapon mesh to 1st person char mesh
-	if (const USkeletalMeshSocket* HandSocket = Character->GetCharacterMesh(true)->GetSocketByName(FName("RightHandSocket"))) {
-		if (USkeletalMeshComponent* WeaponMesh = EquippedWeapon->GetWeaponMesh(true)) {
-			WeaponMesh->AttachToComponent(Character->GetCharacterMesh(true), FAttachmentTransformRules::SnapToTargetIncludingScale, HandSocket->SocketName);
 		}
 	}
 }

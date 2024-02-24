@@ -9,21 +9,11 @@
 #include "Animation/AnimationAsset.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Engine/SkeletalMeshSocket.h"
 
 AWeapon::AWeapon() {
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
-
-	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh1P"));
-	Mesh1P->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
-	Mesh1P->bReceivesDecals = false;
-	Mesh1P->CastShadow = false;
-	Mesh1P->SetCollisionObjectType(ECC_WorldDynamic);
-	Mesh1P->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	Mesh1P->SetCollisionResponseToAllChannels(ECR_Ignore);
-	RootComponent = Mesh1P;
-	Mesh1P->bOwnerNoSee = false;
-	Mesh1P->bOnlyOwnerSee = true;
 
 	Mesh3P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh3P"));
 	Mesh3P->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
@@ -33,9 +23,22 @@ AWeapon::AWeapon() {
 	Mesh3P->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Mesh3P->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 	Mesh3P->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-	Mesh3P->SetupAttachment(Mesh1P);
 	Mesh3P->bOwnerNoSee = true;
 	Mesh3P->bOnlyOwnerSee = false;
+	RootComponent = Mesh3P;
+
+	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh1P"));
+	Mesh1P->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	Mesh1P->bReceivesDecals = false;
+	Mesh1P->CastShadow = false;
+	Mesh1P->SetCollisionObjectType(ECC_WorldDynamic);
+	Mesh1P->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Mesh1P->SetCollisionResponseToAllChannels(ECR_Ignore);
+	Mesh1P->bOwnerNoSee = false;
+	Mesh1P->bOnlyOwnerSee = true;
+	Mesh1P->bHiddenInGame = true;
+	Mesh1P->SetupAttachment(Mesh3P);
+
 
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
 	AreaSphere->SetupAttachment(RootComponent);
@@ -95,7 +98,6 @@ void AWeapon::SetWeaponState(EWeaponState State) {
 	switch (WeaponState) {
 	case EWeaponState::EWS_Equipped:
 		/* Gets called when equipping a weapon */
-
 		ShowPickupWidget(false);
 		GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		break;
@@ -110,6 +112,15 @@ void AWeapon::OnRep_WeaponState() {
 	switch (WeaponState) {
 	case EWeaponState::EWS_Equipped:
 		ShowPickupWidget(false);
+		if (ADwarfCharacter* Char = Cast<ADwarfCharacter>(Owner)) {
+			if (Char->IsLocallyControlled()) {
+				Mesh1P->bHiddenInGame = false;
+				if (const USkeletalMeshSocket* HandSocket = Char->GetCharacterMesh(true)->GetSocketByName(FName("RightHandSocket_1P"))) {
+					HandSocket->AttachActor(this, Char->GetCharacterMesh(true));
+					Mesh1P->AttachToComponent(Char->GetCharacterMesh(true), FAttachmentTransformRules::SnapToTargetIncludingScale, HandSocket->SocketName);
+				}
+			}
+		}
 		break;
 		
 	}

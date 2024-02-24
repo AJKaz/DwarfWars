@@ -30,7 +30,7 @@ ADwarfCharacter::ADwarfCharacter() {
 	Mesh1P->bReceivesDecals = false;
 	Mesh1P->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 	Mesh1P->PrimaryComponentTick.TickGroup = TG_PrePhysics;
-	Mesh1P->SetCollisionObjectType(ECC_Pawn);
+	//Mesh1P->SetCollisionObjectType(ECC_Pawn);
 	Mesh1P->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Mesh1P->SetCollisionResponseToAllChannels(ECR_Ignore);
 

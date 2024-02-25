@@ -7,11 +7,7 @@ change logic in PostLogin
 
 Misc Ideas:
 
-- Bow with explosive arrows
 - Punch person & steal their weapon
-- Grapple gun & u can grapple into ppl
-- Emotes
-
 - Team Game
 - No passive healing, health on kills
 - Health heals on map
@@ -19,23 +15,31 @@ Misc Ideas:
 
 Classes:
 
-- Fist & Grapple
-  - Brass knuckles
+- Grappler
+  - Asset: KACHUJIN G ROSALES
+  - Kunai
+  - Grapple Gun
   - Faster movement
-- Archer -> Bow & Special arrows - asset "Erika Archer"
-  - Explosive Arrow - explodes after X seconds OR can trigger it
-  - Drunk arrow - makes them dizzy
-  - Heal arrow - can heal anyone
-  - Emote arrow - just fortnite boogie bomb
-- Revolver & Jump Pack
-  - 100% head
-  - 45% body
-  - 30% toes
+- Archer
+  - Asset: AKAI E ESPIRITU w/ Erika Archer textures
+  - Bow & Special arrows
+    - Explosive Arrow - explodes after X seconds OR can trigger it
+    - Drunk arrow - makes them dizzy
+    - Heal arrow - can heal anyone
+    - Emote arrow - just fortnite boogie bomb
+- Bandit
+  - Asset: EVE BY J.GONZALES
+  - Primary - Revolver:
+    - 100% head
+    - 45% body
+    - 30% toes
+  - Secondary - Jump Pack
   - Quick Cast Nade
-    - On Cooldown
-- Sniper & auto pistol secondary
-  - 125% damage to head
-  - 80% damage to body
-  - 60% to toes
-- Shotgun
-  -
+    - On a cooldown
+- Marksman
+  - Asset: Steve
+  - Primary - Sniper:
+    - 125% damage to head
+    - 80% damage to body
+    - 60% to toes
+  - Secondary - Auto Pistol

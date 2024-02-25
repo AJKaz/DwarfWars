@@ -22,7 +22,7 @@ Classes:
 - Fist & Grapple
   - Brass knuckles
   - Faster movement
-- Fabla -> Bow & Special arrows
+- Archer -> Bow & Special arrows - asset "Erika Archer"
   - Explosive Arrow - explodes after X seconds OR can trigger it
   - Drunk arrow - makes them dizzy
   - Heal arrow - can heal anyone
@@ -37,4 +37,5 @@ Classes:
   - 125% damage to head
   - 80% damage to body
   - 60% to toes
--
+- Shotgun
+  -

@@ -149,18 +149,17 @@ void UCombatComponent::ShootButtonPressed(bool bPressed) {
 	bShootButtonPressed = bPressed;
 
 	if (bPressed) {
-		// HitResult.ImpactPoint -> Is FVector_NetQuantize & is location of hit - can be used for tracers
-		/*FHitResult HitResult;
-		TraceUnderCrosshairs(HitResult);*/
-		// SimulateShoot(HitResult.ImpactPoint);
+		// Spawn Tracers
+		/*if (EquippedWeapon) {
+			FHitResult HitResult;
+			TraceUnderCrosshairs(HitResult);
+			EquippedWeapon->SimulateShoot(HitResult.ImpactPoint);
+		}*/
 
 		FVector StartPos;
 		FVector Direction;
 		GetScreenCenter(StartPos, Direction);
-
-		/*if (Character->HasAuthority()) UE_LOG(LogTemp, Warning, TEXT("SERVER Direction Vector 2: %s"), *Direction.ToString());
-		if (!Character->HasAuthority()) UE_LOG(LogTemp, Warning, TEXT("CLIENT Direction Vector 2: %s"), *Direction.ToString());*/
-
+		
 		ServerShoot(StartPos, Direction);
 	}
 }
@@ -171,9 +170,6 @@ void UCombatComponent::ServerShoot_Implementation(const FVector_NetQuantize& Sta
 	// Character->PlayShootMontage(bAiming);
 	//}
 	
-	/*if (Character->HasAuthority()) UE_LOG(LogTemp, Warning, TEXT("SERVER Direction Vector in server shoot: %s"), *Direction.ToString());
-	if (!Character->HasAuthority()) UE_LOG(LogTemp, Warning, TEXT("CLIENT Direction Vector in server shoot: %s"), *Direction.ToString());*/
-
 	MulticastShoot(StartPos, Direction);
 
 }

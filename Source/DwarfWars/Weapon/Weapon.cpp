@@ -10,6 +10,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Projectile.h"
 
 AWeapon::AWeapon() {
 	PrimaryActorTick.bCanEverTick = false;
@@ -94,7 +95,7 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 
 void AWeapon::SetWeaponState(EWeaponState State) {
 	WeaponState = State;
-	
+
 	switch (WeaponState) {
 	case EWeaponState::EWS_Equipped:
 		/* Gets called when equipping a weapon */
@@ -122,7 +123,7 @@ void AWeapon::OnRep_WeaponState() {
 			}
 		}
 		break;
-		
+
 	}
 }
 

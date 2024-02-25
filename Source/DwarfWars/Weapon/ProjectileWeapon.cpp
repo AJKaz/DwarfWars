@@ -25,8 +25,9 @@ void AProjectileWeapon::Shoot(const FVector_NetQuantize& StartPos, const FVector
 	* THIS COMMENTED CODE: Spawns projectile from the gun's muzzle and shoots in direction of aim
 	* Not the implementation I want - keeping it here for future reference if needed
 	* If using this method, need to pass in HitTarget from CombatComp.cpp instead of StartPos & Direction
-	* 
+	*/
 	// Get Gun's Muzzle Location
+	/*
 	if (const USkeletalMeshSocket* MuzzleSocket = GetWeaponMesh(false)->GetSocketByName("Muzzle")) {
 		FTransform SocketTransform = MuzzleSocket->GetSocketTransform(GetWeaponMesh(false));
 
@@ -42,6 +43,6 @@ void AProjectileWeapon::Shoot(const FVector_NetQuantize& StartPos, const FVector
 
 			World->SpawnActor<AProjectile>(ProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
 		}
-
-	} */
+	}
+	*/
 }
